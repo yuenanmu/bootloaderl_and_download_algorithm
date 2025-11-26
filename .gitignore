@@ -132,3 +132,7 @@ dkms.conf
 # 忽略 Keil 的特定日志文件 (可选)
 keil-assistant.log
 uv4.log.lock
+
+# 忽略临时文件和备份文件
+
+

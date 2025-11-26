@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "memorymap.h"
 #include "quadspi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -65,64 +66,52 @@ uint32_t JumpAddress;
 #define APP_FLASH_ADDR	(0x8010000)	//Address of the application
 void Jump_to_Application()
 {
+	//uint32_t JumpAddress;
+	//pFunction JumpToApp;
 	if(((*(__IO uint32_t *)APP_FLASH_ADDR) & 0x2FFE0000) == 0x24000000)
 	{
 		__disable_irq();
 		JumpAddress = *(__IO uint32_t*)(APP_FLASH_ADDR + 4);
 		__set_MSP(*(__IO uint32_t*)(APP_FLASH_ADDR));
-		 SCB->VTOR = APP_FLASH_ADDR;  
 		JumpToApp = (pFunction)JumpAddress;
+		//JumpToApp = (pFunction)((__IO uint32_t*)(0x08010339));
 		JumpToApp();
 	}
+	//else
+		//HAL_UART_Transmit(&huart1,"JumpError\n",10,100);
 }
 
-void W25Q256_EnableQPI(void) {
-    QSPI_CommandTypeDef cmd = {0};
-    
-    // �˳�QPIģʽ (�������QPIģʽ)
-    cmd.Instruction = 0xFF;
-    cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    cmd.AddressMode = QSPI_ADDRESS_NONE;
-    cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    cmd.DataMode = QSPI_DATA_NONE;
-    HAL_QSPI_Command(&hqspi, &cmd, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
-    HAL_Delay(1);
-    
-    // ����QPIģʽ
-    cmd.Instruction = 0x38; // Enter Quad mode
-    cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    HAL_QSPI_Command(&hqspi, &cmd, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
-    HAL_Delay(1);
-}
-
-void W25Q256_EnterMemoryMappedMode(QSPI_HandleTypeDef *hqspi) {
-    W25Q256_EnableQPI(); 
-    
+void W25Q256_EnterMemoryMappedMode(QSPI_HandleTypeDef *hqspi)
+{
     QSPI_CommandTypeDef s_command = {0};
     QSPI_MemoryMappedTypeDef sMemMappedCfg = {0};
 
-    // W25Q256����ȷFast Read Quad I/Oָ��
-    s_command.Instruction = 0xEB; // Fast Read Quad I/O
-    s_command.InstructionMode = QSPI_INSTRUCTION_4_LINES;
-    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
-    s_command.AddressMode = QSPI_ADDRESS_4_LINES;
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.DummyCycles = 6; // 6 dummy cycles for 0xEB command
-    s_command.DataMode = QSPI_DATA_4_LINES;
-    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
-    s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
-    
-    // �ڴ�ӳ������
-    sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
-    
-    // �������
-    SCB_InvalidateICache();
-    SCB_CleanInvalidateDCache();
-    
-    if (HAL_QSPI_MemoryMapped(hqspi, &s_command, &sMemMappedCfg) != HAL_OK) {
+    // Configure read command for memory-mapped mode (Fast Read Quad I/O, 0xEB)
+    s_command.Instruction = 0xEB; // Fast Read Quad I/O (8-bit, valid: 0x00-0xFF)
+    s_command.InstructionMode = QSPI_INSTRUCTION_4_LINES; // QPI mode: 4-line instruction
+    s_command.Address = 0; // Start address (32-bit, valid: 0x0-0xFFFFFFFF)
+    s_command.AddressMode = QSPI_ADDRESS_4_LINES; // 4-line address
+    s_command.AddressSize = QSPI_ADDRESS_24_BITS; // W25Q256 uses 24-bit address
+    s_command.AlternateBytes = 0; // No alternate bytes (valid: 0x0-0xFFFFFFFF)
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE; // No alternate bytes
+    s_command.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS; // Default, not used
+    s_command.DataMode = QSPI_DATA_4_LINES; // 4-line data
+    s_command.NbData = 0; // Undefined length (read until end of memory)
+    s_command.DummyCycles = 6; // 6 dummy cycles (valid: 0-31, per W25Q256 datasheet)
+    s_command.DdrMode = QSPI_DDR_MODE_DISABLE; // Disable DDR
+    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY; // Default DDR hold
+    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD; // Send instruction every time
+
+    // Configure memory-mapped mode
+    sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE; // Disable timeout
+    sMemMappedCfg.TimeOutPeriod = 0; // No timeout period
+
+    if (HAL_QSPI_MemoryMapped(hqspi, &s_command, &sMemMappedCfg) != HAL_OK)
+    {
         Error_Handler();
     }
 }
+
 
 /* USER CODE END 0 */
 
@@ -134,9 +123,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  //buzzer_on();
+
   /* USER CODE END 1 */
-  buzzer_on();
+
   /* MPU Configuration--------------------------------------------------------*/
   MPU_Config();
 
@@ -169,21 +158,21 @@ int main(void)
   //SCB_DisableICache();
   //SCB_DisableDCache();
   //SysTick->CTRL=0;
-	buzzer_on();
+	
   while (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)!= GPIO_PIN_SET)
   {
 	  HAL_UART_Transmit(&huart1,"Ready\n",6,100);
 	  HAL_Delay(500);
   }
-  //Jump_to_Application();
-	//buzzer_on();
+  Jump_to_Application();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_UART_Transmit(&huart1,"Jump Failed\n",5,100);
+	  HAL_UART_Transmit(&huart1,"Test\n",5,100);
 	  //HAL_UART_Transmit(&huart1,(const uint8_t*)((__IO uint32_t *)APP_FLASH_ADDR),4,100);
 	  //HAL_UART_Transmit(&huart1,(const uint8_t*)((__IO uint32_t *)0x10000),4,100);
 	  HAL_Delay(500);
@@ -271,33 +260,9 @@ void MPU_Config(void)
   /* Disables the MPU */
   HAL_MPU_Disable();
 
-  /*
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-  MPU_InitStruct.BaseAddress = 0x0;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_4GB;
-  MPU_InitStruct.SubRegionDisable = 0x87;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-  MPU_InitStruct.AccessPermission = MPU_REGION_NO_ACCESS;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-  
-  MPU_InitStruct.Number = MPU_REGION_NUMBER1;
-  MPU_InitStruct.BaseAddress = 0x08000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
-  MPU_InitStruct.SubRegionDisable = 0x0;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
-  MPU_InitStruct.AccessPermission = MPU_REGION_PRIV_RO;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-	  //Initializes and configures the Region and the memory to be protected
+  /** Initializes and configures the Region and the memory to be protected
   */
-	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
   MPU_InitStruct.Number = MPU_REGION_NUMBER0;
   MPU_InitStruct.BaseAddress = 0x0;
   MPU_InitStruct.Size = MPU_REGION_SIZE_4GB;
@@ -317,53 +282,11 @@ void MPU_Config(void)
   MPU_InitStruct.BaseAddress = 0x08000000;
   MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
   MPU_InitStruct.SubRegionDisable = 0x0;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
   MPU_InitStruct.AccessPermission = MPU_REGION_PRIV_RO;
   MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
   MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
 
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-	// --- 新增 Region 2:
-	 MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER2;          // Region 2
-  MPU_InitStruct.BaseAddress = 0x20000000;              // IRAM1 (DTCM RAM) 起始地址
-  MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;         // IRAM1 大小 (128KB = 2^17 bytes)
-  MPU_InitStruct.SubRegionDisable = 0x0;               // 不禁用子区域
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;        // 通常用于TCM RAM
-  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS; // 给予读写权限
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE; // 通常数据区不允许执行代码
-  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE; // DTCM RAM 通常不缓存
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-
-	// --- 新增 Region 4: 内部 RAM2 (AXI SRAM) ---
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER4;          // 使用 Region 4 (Region 3 可留给外部Flash)
-  MPU_InitStruct.BaseAddress = 0x24000000;              // IRAM2 (AXI SRAM) 起始地址
-  MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;         // IRAM2 大小 (512KB = 2^19 bytes)
-  MPU_InitStruct.SubRegionDisable = 0x0;               // 不禁用子区域
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;        // 通常用于AXI SRAM
-  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS; // 给予读写权限
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE; // 数据区通常不允许执行代码，除非有特殊需求
-  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;   // AXI SRAM 通常可缓存
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-	
-  // --- 新增 Region 5: 外部 QSPI Flash 映射区域 ---
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE; // 启用此Region
-  MPU_InitStruct.Number = MPU_REGION_NUMBER3; // 使用Region编号3
-  MPU_InitStruct.BaseAddress = 0x90000000; // 外部Flash映射地址 (通常为0x90000000)
-  MPU_InitStruct.Size = MPU_REGION_SIZE_32MB; // 【需要修改】：请根据您实际使用的外部Flash芯片容量进行设置 (例如 W25Q128=16MB->MPU_REGION_SIZE_16MB, W25Q64=8MB->MPU_REGION_SIZE_8MB)
-  MPU_InitStruct.SubRegionDisable = 0x0; // 通常不禁用子区域
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1; // 通常用于外部存储器
-  MPU_InitStruct.AccessPermission = MPU_REGION_PRIV_RO_URO; // 设置为只读 (通常外部Flash不需要写入权限)。也可以设置为 MPU_REGION_FULL_ACCESS 如果需要。
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE; // 【关键】：必须设置为 ENABLE，允许从外部Flash执行代码
-  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE; // 通常设置为非共享
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE; // 通常可缓存
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE; // 通常可缓冲
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
