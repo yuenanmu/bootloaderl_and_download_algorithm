@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "W25Q256.h"
+#include "bsp_qspi_flash.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,36 +91,8 @@ void Jump_to_Application()
 		//HAL_UART_Transmit(&huart1,"JumpError\n",10,100);
 }
 
-void W25Q256_EnterMemoryMappedMode(QSPI_HandleTypeDef *hqspi)
-{
-    QSPI_CommandTypeDef s_command = {0};
-    QSPI_MemoryMappedTypeDef sMemMappedCfg = {0};
-
-    // Configure read command for memory-mapped mode (Fast Read Quad I/O, 0xEB)
-    s_command.Instruction = 0xEB; // Fast Read Quad I/O (8-bit, valid: 0x00-0xFF)
-    s_command.InstructionMode = QSPI_INSTRUCTION_4_LINES; // QPI mode: 4-line instruction
-    s_command.Address = 0; // Start address (32-bit, valid: 0x0-0xFFFFFFFF)
-    s_command.AddressMode = QSPI_ADDRESS_4_LINES; // 4-line address
-    s_command.AddressSize = QSPI_ADDRESS_24_BITS; // W25Q256 uses 24-bit address
-    s_command.AlternateBytes = 0; // No alternate bytes (valid: 0x0-0xFFFFFFFF)
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE; // No alternate bytes
-    s_command.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS; // Default, not used
-    s_command.DataMode = QSPI_DATA_4_LINES; // 4-line data
-    s_command.NbData = 0; // Undefined length (read until end of memory)
-    s_command.DummyCycles = 6; // 6 dummy cycles (valid: 0-31, per W25Q256 datasheet)
-    s_command.DdrMode = QSPI_DDR_MODE_DISABLE; // Disable DDR
-    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY; // Default DDR hold
-    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD; // Send instruction every time
-
-    // Configure memory-mapped mode
-    sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE; // Disable timeout
-    sMemMappedCfg.TimeOutPeriod = 0; // No timeout period
-
-    if (HAL_QSPI_MemoryMapped(hqspi, &s_command, &sMemMappedCfg) != HAL_OK)
-    {
-        Error_Handler();
-    }
-}
+/* W25Q256_EnterMemoryMappedMode removed - using bsp_qspi_flash.c instead
+ * QSPI_FLASH_Init() will initialize QSPI and enter memory-mapped mode automatically */
 
 
 /* USER CODE END 0 */
@@ -152,19 +124,20 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  SCB->VTOR = 0x90000000;
+  
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-  MX_QUADSPI_Init();
+  /* MX_QUADSPI_Init() removed - using bsp_qspi_flash instead */
   /* USER CODE BEGIN 2 */
   HAL_Delay(100);
-  //HAL_UART_Transmit(&huart1,"Test\n",5,100);
-  W25Q256_Init();
-  W25Q256_EnterMemoryMappedMode(&hqspi);
-  HAL_UART_Transmit(&huart1,"Test\n",5,100);
+  
+  /* Initialize QSPI Flash and enter memory-mapped mode
+   * This single call does: GPIO init, QSPI init, QE enable, 4-byte addr mode, memory-mapped mode */
+  QSPI_FLASH_Init();
+  HAL_UART_Transmit(&huart1,"QSPI Ready\n",11,100);
   //SCB_DisableICache();
   //SCB_DisableDCache();
   //SysTick->CTRL=0;
