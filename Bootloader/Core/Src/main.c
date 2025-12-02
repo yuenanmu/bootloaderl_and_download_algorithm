@@ -62,8 +62,8 @@ static void MPU_Config(void);
 typedef void (*pFunction)(void);
 pFunction JumpToApp;
 uint32_t JumpAddress;
-//#define APP_FLASH_ADDR	(0x90000000)	//Address of the application
-#define APP_FLASH_ADDR	(0x8010000)	//Address of the application
+#define APP_FLASH_ADDR	(0x90000000)	//Address of the application
+//#define APP_FLASH_ADDR	(0x8010000)	//Address of the application
 void Jump_to_Application()
 {
 	//uint32_t JumpAddress;
