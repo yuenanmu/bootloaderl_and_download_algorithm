@@ -70,12 +70,22 @@ void Jump_to_Application()
 	//pFunction JumpToApp;
 	if(((*(__IO uint32_t *)APP_FLASH_ADDR) & 0x2FFE0000) == 0x24000000)
 	{
-		__disable_irq();
-		JumpAddress = *(__IO uint32_t*)(APP_FLASH_ADDR + 4);
-		__set_MSP(*(__IO uint32_t*)(APP_FLASH_ADDR));
-		JumpToApp = (pFunction)JumpAddress;
-		//JumpToApp = (pFunction)((__IO uint32_t*)(0x08010339));
-		JumpToApp();
+		   /* Prepare system for jumping to the application in QSPI memory mapped at 0x90000000 */
+    __disable_irq();
+    /* De-initialize HAL to release resources used by bootloader */
+    HAL_DeInit();
+    /* Set the vector table base address to the application location */
+    SCB->VTOR = APP_FLASH_ADDR;
+    /* Set main stack pointer to application's stack (first word) */
+    JumpAddress = *(__IO uint32_t*)(APP_FLASH_ADDR + 4);
+    __set_MSP(*(__IO uint32_t*)(APP_FLASH_ADDR));
+    /* Jump to application's Reset Handler */
+    JumpToApp = (pFunction)JumpAddress;
+    /* Ensure no pending systick */
+    SysTick->CTRL = 0;
+    SysTick->LOAD = 0;
+    SysTick->VAL = 0;
+    JumpToApp();
 	}
 	//else
 		//HAL_UART_Transmit(&huart1,"JumpError\n",10,100);
@@ -142,7 +152,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  SCB->VTOR = 0x90000000;
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -286,6 +296,18 @@ void MPU_Config(void)
   MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
   MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+  /** Configure QSPI memory mapped region (external flash XIP at 0x90000000) */
+  MPU_InitStruct.Number = MPU_REGION_NUMBER2;
+  MPU_InitStruct.BaseAddress = 0x90000000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_64MB;
+  MPU_InitStruct.SubRegionDisable = 0x0;
+  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enables the MPU */
