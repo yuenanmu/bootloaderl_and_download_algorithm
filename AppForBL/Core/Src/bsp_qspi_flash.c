@@ -15,7 +15,7 @@
   ******************************************************************************
   */
   
-#include "./flash/bsp_qspi_flash.h"
+#include "bsp_qspi_flash.h"
 
 QSPI_HandleTypeDef QSPIHandle;
 
@@ -96,7 +96,82 @@ void QSPI_FLASH_Init(void)
 	/*初始化QSPI接口*/
 	BSP_QSPI_Init();
 }
+/**
+  * @brief  发送写入使能，等待它有效.
+  * @param  QSPIHandle: QSPI句柄
+  * @retval 无
+  */
+static uint8_t QSPI_WriteEnable()
+{
+	QSPI_CommandTypeDef     sCommand;
+	QSPI_AutoPollingTypeDef s_config;
+	/* 启用写操作 */
+	sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
+	sCommand.Instruction       = WRITE_ENABLE_CMD;
+	sCommand.AddressMode       = QSPI_ADDRESS_NONE;
+	sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+	sCommand.DataMode          = QSPI_DATA_NONE;
+	sCommand.DummyCycles       = 0;
+	sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
+	sCommand.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+	sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
+	if (HAL_QSPI_Command(&QSPIHandle, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	{
+		return QSPI_ERROR;
+	}
 
+	/* 配置自动轮询模式等待写启用 */  
+	s_config.Match           = W25Q256JV_FSR_WREN;
+	s_config.Mask            = W25Q256JV_FSR_WREN;
+	s_config.MatchMode       = QSPI_MATCH_MODE_AND;
+	s_config.StatusBytesSize = 2;
+	s_config.Interval        = 0x10;
+	s_config.AutomaticStop   = QSPI_AUTOMATIC_STOP_ENABLE;
+
+	sCommand.Instruction    = READ_STATUS_REG1_CMD;
+	sCommand.DataMode       = QSPI_DATA_1_LINE;
+	sCommand.NbData         = 1;
+
+	if (HAL_QSPI_AutoPolling(&QSPIHandle, &sCommand, &s_config, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	{
+		return QSPI_ERROR;
+	}
+	return QSPI_OK;
+}
+
+/**
+  * @brief  读取存储器的SR并等待EOP
+  * @param  无
+  * @retval 无
+  */
+static uint8_t QSPI_AutoPollingMemReady(void)
+{
+	QSPI_CommandTypeDef     s_command;
+	QSPI_AutoPollingTypeDef s_config;
+	/* 配置自动轮询模式等待存储器准备就绪 */  
+	s_command.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
+	s_command.Instruction       = READ_STATUS_REG1_CMD;
+	s_command.AddressMode       = QSPI_ADDRESS_NONE;
+	s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+	s_command.DataMode          = QSPI_DATA_1_LINE;
+	s_command.DummyCycles       = 0;
+	s_command.DdrMode           = QSPI_DDR_MODE_DISABLE;
+	s_command.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+	s_command.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
+
+	s_config.Match           = 0x00;
+	s_config.Mask            = W25Q256JV_FSR_BUSY;
+	s_config.MatchMode       = QSPI_MATCH_MODE_AND;
+	s_config.StatusBytesSize = 2;
+	s_config.Interval        = 0x10;
+	s_config.AutomaticStop   = QSPI_AUTOMATIC_STOP_ENABLE;
+
+	if (HAL_QSPI_AutoPolling(&QSPIHandle, &s_command, &s_config,HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	{
+		return QSPI_ERROR;
+	}
+	return QSPI_OK;
+}
 /**
   * @brief  配置QSPI为内存映射模式
   * @retval QSPI内存状态
@@ -256,80 +331,5 @@ uint8_t QSPI_EnterFourBytesAddress(void)
 	return QSPI_OK;
 
 }
-/**
-  * @brief  发送写入使能，等待它有效.
-  * @param  QSPIHandle: QSPI句柄
-  * @retval 无
-  */
-static uint8_t QSPI_WriteEnable()
-{
-	QSPI_CommandTypeDef     sCommand;
-	QSPI_AutoPollingTypeDef s_config;
-	/* 启用写操作 */
-	sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-	sCommand.Instruction       = WRITE_ENABLE_CMD;
-	sCommand.AddressMode       = QSPI_ADDRESS_NONE;
-	sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-	sCommand.DataMode          = QSPI_DATA_NONE;
-	sCommand.DummyCycles       = 0;
-	sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-	sCommand.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
-	sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-	if (HAL_QSPI_Command(&QSPIHandle, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-	{
-		return QSPI_ERROR;
-	}
 
-	/* 配置自动轮询模式等待写启用 */  
-	s_config.Match           = W25Q256JV_FSR_WREN;
-	s_config.Mask            = W25Q256JV_FSR_WREN;
-	s_config.MatchMode       = QSPI_MATCH_MODE_AND;
-	s_config.StatusBytesSize = 2;
-	s_config.Interval        = 0x10;
-	s_config.AutomaticStop   = QSPI_AUTOMATIC_STOP_ENABLE;
-
-	sCommand.Instruction    = READ_STATUS_REG1_CMD;
-	sCommand.DataMode       = QSPI_DATA_1_LINE;
-	sCommand.NbData         = 1;
-
-	if (HAL_QSPI_AutoPolling(&QSPIHandle, &sCommand, &s_config, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-	{
-		return QSPI_ERROR;
-	}
-	return QSPI_OK;
-}
-
-/**
-  * @brief  读取存储器的SR并等待EOP
-  * @param  无
-  * @retval 无
-  */
-static uint8_t QSPI_AutoPollingMemReady(void)
-{
-	QSPI_CommandTypeDef     s_command;
-	QSPI_AutoPollingTypeDef s_config;
-	/* 配置自动轮询模式等待存储器准备就绪 */  
-	s_command.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-	s_command.Instruction       = READ_STATUS_REG1_CMD;
-	s_command.AddressMode       = QSPI_ADDRESS_NONE;
-	s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-	s_command.DataMode          = QSPI_DATA_1_LINE;
-	s_command.DummyCycles       = 0;
-	s_command.DdrMode           = QSPI_DDR_MODE_DISABLE;
-	s_command.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
-	s_command.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-
-	s_config.Match           = 0x00;
-	s_config.Mask            = W25Q256JV_FSR_BUSY;
-	s_config.MatchMode       = QSPI_MATCH_MODE_AND;
-	s_config.StatusBytesSize = 2;
-	s_config.Interval        = 0x10;
-	s_config.AutomaticStop   = QSPI_AUTOMATIC_STOP_ENABLE;
-
-	if (HAL_QSPI_AutoPolling(&QSPIHandle, &s_command, &s_config,HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-	{
-		return QSPI_ERROR;
-	}
-	return QSPI_OK;
-}
 /*********************************************END OF FILE**********************/

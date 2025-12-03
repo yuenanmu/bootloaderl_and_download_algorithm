@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "bsp_debug_usart.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -98,7 +98,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   //MX_QUADSPI_Init();
-  MX_USART1_UART_Init();
+  //MX_USART1_UART_Init();
+	DEBUG_USART_Config();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(GPIOA,GPIO_PIN_3,GPIO_PIN_SET);
   /* USER CODE END 2 */
@@ -107,7 +108,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_UART_Transmit(&huart1,(const uint8_t *)"Success\n",8,100);
+	  //HAL_UART_Transmit(&huart1,(const uint8_t *)"Success\n",8,100);
+		printf("Success\n");
 	  HAL_Delay(500);
     /* USER CODE END WHILE */
 

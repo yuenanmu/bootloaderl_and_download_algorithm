@@ -21,6 +21,7 @@
 #include "memorymap.h"
 #include "quadspi.h"
 #include "usart.h"
+#include "bsp_debug_usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -129,7 +130,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART1_UART_Init();
+  //MX_USART1_UART_Init();
+	DEBUG_USART_Config();
   /* MX_QUADSPI_Init() removed - using bsp_qspi_flash instead */
   /* USER CODE BEGIN 2 */
   HAL_Delay(100);
@@ -137,16 +139,18 @@ int main(void)
   /* Initialize QSPI Flash and enter memory-mapped mode
    * This single call does: GPIO init, QSPI init, QE enable, 4-byte addr mode, memory-mapped mode */
   QSPI_FLASH_Init();
-  HAL_UART_Transmit(&huart1,"QSPI Ready\n",11,100);
+  //HAL_UART_Transmit(&huart1,"QSPI Ready\n",11,100);
+	printf("QSPI Ready\n");
   //SCB_DisableICache();
   //SCB_DisableDCache();
   //SysTick->CTRL=0;
 	
-  while (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)!= GPIO_PIN_SET)
-  {
-	  HAL_UART_Transmit(&huart1,"Ready\n",6,100);
-	  HAL_Delay(500);
-  }
+//  while (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)!= GPIO_PIN_SET)
+//  {
+//	  //HAL_UART_Transmit(&huart1,"Ready\n",6,100);
+//		printf("Ready\n");
+//	  HAL_Delay(500);
+//  }
   Jump_to_Application();
 
   /* USER CODE END 2 */
@@ -155,7 +159,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_UART_Transmit(&huart1,"Test\n",5,100);
+	  //HAL_UART_Transmit(&huart1,"Test\n",5,100)
+		printf("Test\n");
 	  //HAL_UART_Transmit(&huart1,(const uint8_t*)((__IO uint32_t *)APP_FLASH_ADDR),4,100);
 	  //HAL_UART_Transmit(&huart1,(const uint8_t*)((__IO uint32_t *)0x10000),4,100);
 	  HAL_Delay(500);
@@ -170,48 +175,98 @@ int main(void)
   * @brief System Clock Configuration
   * @retval None
   */
+//void SystemClock_Config(void)
+//{
+//  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+//  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+//  /** Supply configuration update enable
+//  */
+//  HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
+
+//  /** Configure the main internal regulator output voltage
+//  */
+//  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+//  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+
+//  __HAL_RCC_SYSCFG_CLK_ENABLE();
+//  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
+
+//  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+
+//  /** Initializes the RCC Oscillators according to the specified parameters
+//  * in the RCC_OscInitTypeDef structure.
+//  */
+//  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+//  RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
+//  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+//  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+//  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+//  RCC_OscInitStruct.PLL.PLLM = 4;
+//  RCC_OscInitStruct.PLL.PLLN = 60;
+//  RCC_OscInitStruct.PLL.PLLP = 2;
+//  RCC_OscInitStruct.PLL.PLLQ = 2;
+//  RCC_OscInitStruct.PLL.PLLR = 2;
+//  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
+//  RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
+//  RCC_OscInitStruct.PLL.PLLFRACN = 0;
+//  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
+
+//  /** Initializes the CPU, AHB and APB buses clocks
+//  */
+//  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+//                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
+//                              |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
+//  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+//  RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
+//  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
+//  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
+//  RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
+//  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
+//  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
+
+//  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
+//}
+
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Supply configuration update enable
+  /** 启用电源配置更新
   */
   HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
-
-  /** Configure the main internal regulator output voltage
+  /** 配置主内稳压器输出电压
   */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-
-  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
-
-  __HAL_RCC_SYSCFG_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
-
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
+  /** 初始化CPU、AHB和APB总线时钟
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 60;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 5;
+  RCC_OscInitStruct.PLL.PLLN = 192;
   RCC_OscInitStruct.PLL.PLLP = 2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
-  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
+  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_2;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
   RCC_OscInitStruct.PLL.PLLFRACN = 0;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    Error_Handler();
+		while(1);
   }
-
-  /** Initializes the CPU, AHB and APB buses clocks
+  /** 初始化CPU、AHB和APB总线时钟
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
@@ -226,10 +281,9 @@ void SystemClock_Config(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
-    Error_Handler();
+		while(1);
   }
 }
-
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
