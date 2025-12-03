@@ -74,29 +74,76 @@ void Jump_to_Application()
 	printf("App Stack Pointer: 0x%08X\r\n", app_stack);
 	printf("App Entry Point:   0x%08X\r\n", app_entry);
 	
-	/* 检查栈指针是否在 AXI SRAM 范围内 (0x24000000 - 0x24080000) */
-	if((app_stack & 0x2FFE0000) == 0x24000000)
-	{
-		printf("Stack check PASSED, jumping to App...\r\n");
-		HAL_Delay(100); /* 等待串口发送完成 */
-		
-		/* Prepare system for jumping to the application */
-		__disable_irq();
-		HAL_DeInit();
-		SCB->VTOR = APP_FLASH_ADDR;
-		JumpAddress = app_entry;
-		__set_MSP(app_stack);
-		JumpToApp = (pFunction)JumpAddress;
-		SysTick->CTRL = 0;
-		SysTick->LOAD = 0;
-		SysTick->VAL = 0;
-		JumpToApp();
-	}
-	else
-	{
-		printf("Stack check FAILED! App not found or corrupted.\r\n");
-		printf("Expected: 0x24xxxxxx, Got: 0x%08X\r\n", app_stack);
-	}
+  /* 检查栈指针是否在 AXI SRAM 范围内 (0x24000000 - 0x24080000) */
+  if((app_stack & 0x2FFE0000) == 0x24000000)
+  {
+    printf("Stack check PASSED, jumping to App...\r\n");
+    HAL_Delay(50); /* 等待串口发送完成 */
+
+    /* --- Prepare system for jumping to the application --- */
+    /* Disable interrupts */
+    __disable_irq();
+
+    /* Stop SysTick */
+    SysTick->CTRL = 0;
+    SysTick->LOAD = 0;
+    SysTick->VAL = 0;
+
+    /* De-initialize HAL to release peripherals */
+//    HAL_DeInit();							//不能有！！！
+
+  #if defined(__MPU_PRESENT) && (__MPU_PRESENT == 1U)
+    /* Disable MPU to let the application set its own regions */
+    HAL_MPU_Disable();
+  #endif
+    /* Disable and clean DCache/ICache to avoid stale/inconsistent cache when switching
+       to application running in QSPI memory-mapped region */
+#if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    SCB_CleanInvalidateDCache();
+    SCB_DisableDCache();
+#endif
+#if defined(__ICACHE_PRESENT) && (__ICACHE_PRESENT == 1U)
+    SCB_DisableICache();
+#endif
+
+    /* Disable all NVIC interrupts */
+    for (uint32_t i = 0; i < 8; i++) {
+      NVIC->ICER[i] = 0xFFFFFFFFU;
+      NVIC->ICPR[i] = 0xFFFFFFFFU;
+    }
+
+    /* Set vector table to application */
+    SCB->VTOR = APP_FLASH_ADDR;
+
+    /* Ensure memory operations complete */
+    __DSB();
+    __ISB();
+
+    /* Set application's Main Stack Pointer */
+    __set_MSP(app_stack);
+
+    /* Data/Instruction synchronization before branch */
+    __DSB();
+    __ISB();
+
+    /* Jump to application (Reset Handler). Ensure Thumb bit is set in address */
+    JumpAddress = app_entry;
+    if ((JumpAddress & 1U) == 0U) {
+      /* If LSB not set, set it (ensure Thumb mode) */
+      JumpAddress |= 1U;
+    }
+    JumpToApp = (pFunction)JumpAddress;
+
+    /* Final barrier and jump */
+    __DSB();
+    __ISB();
+    JumpToApp();
+  }
+  else
+  {
+    printf("Stack check FAILED! App not found or corrupted.\r\n");
+    printf("Expected: 0x24xxxxxx, Got: 0x%08X\r\n", app_stack);
+  }
 }
 
 /* W25Q256_EnterMemoryMappedMode removed - using bsp_qspi_flash.c instead

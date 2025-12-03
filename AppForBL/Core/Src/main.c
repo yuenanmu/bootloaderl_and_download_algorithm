@@ -118,7 +118,8 @@ int main(void)
   {
 	  //HAL_UART_Transmit(&huart1,(const uint8_t *)"Success\n",8,100);
 		printf("Success\n");
-		printf("my task was finished!!");
+		printf("my task was finished!!\n");
+		printf("was finished!!");
 	  HAL_Delay(500);
     /* USER CODE END WHILE */
 
