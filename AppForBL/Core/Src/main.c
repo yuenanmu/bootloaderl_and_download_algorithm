@@ -73,6 +73,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 	__enable_irq();
+	
+  /* 最早的调试输出 - 在任何初始化之前 */
+  /* 注意：这里串口还没初始化，所以用简单的方式 */
 
   /* USER CODE END 1 */
 
@@ -100,7 +103,12 @@ int main(void)
   //MX_QUADSPI_Init();
   //MX_USART1_UART_Init();
 	DEBUG_USART_Config();
+	
   /* USER CODE BEGIN 2 */
+  printf("\r\n\r\n");
+  printf("========================================\r\n");
+  printf("     App Started from QSPI Flash!\r\n");
+  printf("========================================\r\n");
   HAL_GPIO_WritePin(GPIOA,GPIO_PIN_3,GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -110,6 +118,7 @@ int main(void)
   {
 	  //HAL_UART_Transmit(&huart1,(const uint8_t *)"Success\n",8,100);
 		printf("Success\n");
+		printf("my task was finished!!");
 	  HAL_Delay(500);
     /* USER CODE END WHILE */
 

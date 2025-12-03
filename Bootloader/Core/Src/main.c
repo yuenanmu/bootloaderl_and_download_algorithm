@@ -141,10 +141,13 @@ int main(void)
 	DEBUG_USART_Config();
   /* MX_QUADSPI_Init() removed - using bsp_qspi_flash instead */
   /* USER CODE BEGIN 2 */
-  HAL_Delay(100);
+  HAL_Delay(500);  /* 增加延时，确保串口助手能捕获 */
   
   /* === TEST MODE: Comment out QSPI and Jump to test basic Bootloader === */
-  printf("Bootloader Started!\r\n");
+  printf("\r\n\r\n");
+  printf("========================================\r\n");
+  printf("       Bootloader Started!\r\n");
+  printf("========================================\r\n");
   
 #if 0  /* Set to 0 to enable QSPI and jump, 1 for basic test loop */
   /* Basic test - just blink or print to verify bootloader runs */
