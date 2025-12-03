@@ -67,29 +67,36 @@ uint32_t JumpAddress;
 //#define APP_FLASH_ADDR	(0x8010000)	//Address of the application
 void Jump_to_Application()
 {
-	//uint32_t JumpAddress;
-	//pFunction JumpToApp;
-	if(((*(__IO uint32_t *)APP_FLASH_ADDR) & 0x2FFE0000) == 0x24000000)
+	uint32_t app_stack = *(__IO uint32_t *)APP_FLASH_ADDR;
+	uint32_t app_entry = *(__IO uint32_t *)(APP_FLASH_ADDR + 4);
+	
+	/* 打印调试信息 */
+	printf("App Stack Pointer: 0x%08X\r\n", app_stack);
+	printf("App Entry Point:   0x%08X\r\n", app_entry);
+	
+	/* 检查栈指针是否在 AXI SRAM 范围内 (0x24000000 - 0x24080000) */
+	if((app_stack & 0x2FFE0000) == 0x24000000)
 	{
-		   /* Prepare system for jumping to the application in QSPI memory mapped at 0x90000000 */
-    __disable_irq();
-    /* De-initialize HAL to release resources used by bootloader */
-    HAL_DeInit();
-    /* Set the vector table base address to the application location */
-    SCB->VTOR = APP_FLASH_ADDR;
-    /* Set main stack pointer to application's stack (first word) */
-    JumpAddress = *(__IO uint32_t*)(APP_FLASH_ADDR + 4);
-    __set_MSP(*(__IO uint32_t*)(APP_FLASH_ADDR));
-    /* Jump to application's Reset Handler */
-    JumpToApp = (pFunction)JumpAddress;
-    /* Ensure no pending systick */
-    SysTick->CTRL = 0;
-    SysTick->LOAD = 0;
-    SysTick->VAL = 0;
-    JumpToApp();
+		printf("Stack check PASSED, jumping to App...\r\n");
+		HAL_Delay(100); /* 等待串口发送完成 */
+		
+		/* Prepare system for jumping to the application */
+		__disable_irq();
+		HAL_DeInit();
+		SCB->VTOR = APP_FLASH_ADDR;
+		JumpAddress = app_entry;
+		__set_MSP(app_stack);
+		JumpToApp = (pFunction)JumpAddress;
+		SysTick->CTRL = 0;
+		SysTick->LOAD = 0;
+		SysTick->VAL = 0;
+		JumpToApp();
 	}
-	//else
-		//HAL_UART_Transmit(&huart1,"JumpError\n",10,100);
+	else
+	{
+		printf("Stack check FAILED! App not found or corrupted.\r\n");
+		printf("Expected: 0x24xxxxxx, Got: 0x%08X\r\n", app_stack);
+	}
 }
 
 /* W25Q256_EnterMemoryMappedMode removed - using bsp_qspi_flash.c instead
@@ -141,9 +148,15 @@ int main(void)
   QSPI_FLASH_Init();
   //HAL_UART_Transmit(&huart1,"QSPI Ready\n",11,100);
 	printf("QSPI Ready\n");
-  //SCB_DisableICache();
-  //SCB_DisableDCache();
-  //SysTick->CTRL=0;
+  
+  /* Debug: Read and print data at 0x90000000 to verify memory-mapped mode */
+  printf("Reading from QSPI memory-mapped address:\r\n");
+  printf("  [0x90000000] = 0x%08X (should be stack pointer ~0x24xxxxxx)\r\n", 
+         *(__IO uint32_t*)0x90000000);
+  printf("  [0x90000004] = 0x%08X (should be reset handler ~0x900xxxxx)\r\n", 
+         *(__IO uint32_t*)0x90000004);
+  printf("  [0x90000008] = 0x%08X\r\n", *(__IO uint32_t*)0x90000008);
+  printf("  [0x9000000C] = 0x%08X\r\n", *(__IO uint32_t*)0x9000000C);
 	
 //  while (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)!= GPIO_PIN_SET)
 //  {
