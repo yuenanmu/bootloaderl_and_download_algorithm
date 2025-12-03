@@ -137,7 +137,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  //MX_USART1_UART_Init();
+  MX_USART1_UART_Init();
 	DEBUG_USART_Config();
   /* MX_QUADSPI_Init() removed - using bsp_qspi_flash instead */
   /* USER CODE BEGIN 2 */
@@ -146,7 +146,7 @@ int main(void)
   /* === TEST MODE: Comment out QSPI and Jump to test basic Bootloader === */
   printf("Bootloader Started!\r\n");
   
-#if 1  /* Set to 0 to enable QSPI and jump, 1 for basic test loop */
+#if 0  /* Set to 0 to enable QSPI and jump, 1 for basic test loop */
   /* Basic test - just blink or print to verify bootloader runs */
   while(1)
   {
