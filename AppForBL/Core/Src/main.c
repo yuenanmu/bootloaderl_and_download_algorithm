@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "bsp_debug_usart.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -73,6 +73,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 	__enable_irq();
+	
+  /* 最早的调试输出 - 在任何初始化之前 */
+  /* 注意：这里串口还没初始化，所以用简单的方式 */
 
   /* USER CODE END 1 */
 
@@ -98,8 +101,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   //MX_QUADSPI_Init();
-  MX_USART1_UART_Init();
+  //MX_USART1_UART_Init();
+	DEBUG_USART_Config();
+	
   /* USER CODE BEGIN 2 */
+  printf("\r\n\r\n");
+  printf("========================================\r\n");
+  printf("     App Started from QSPI Flash!\r\n");
+  printf("========================================\r\n");
   HAL_GPIO_WritePin(GPIOA,GPIO_PIN_3,GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -107,7 +116,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_UART_Transmit(&huart1,(const uint8_t *)"Success\n",8,100);
+	  //HAL_UART_Transmit(&huart1,(const uint8_t *)"Success\n",8,100);
+		printf("Success\n");
+		printf("my task was finished!!\n");
+		printf("was finished!!");
 	  HAL_Delay(500);
     /* USER CODE END WHILE */
 
@@ -323,6 +335,23 @@ void MPU_Config(void)
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+  /** Configure QSPI memory mapped region (external flash XIP at 0x90000000)
+   *  This region allows code execution from external QSPI flash */
+  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+  MPU_InitStruct.BaseAddress = 0x90000000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_64MB;
+  MPU_InitStruct.SubRegionDisable = 0x0;
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 
