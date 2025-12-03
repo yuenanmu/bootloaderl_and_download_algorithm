@@ -143,6 +143,17 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_Delay(100);
   
+  /* === TEST MODE: Comment out QSPI and Jump to test basic Bootloader === */
+  printf("Bootloader Started!\r\n");
+  
+#if 1  /* Set to 0 to enable QSPI and jump, 1 for basic test loop */
+  /* Basic test - just blink or print to verify bootloader runs */
+  while(1)
+  {
+    printf("Bootloader running...\r\n");
+    HAL_Delay(1000);
+  }
+#else
   /* Initialize QSPI Flash and enter memory-mapped mode
    * This single call does: GPIO init, QSPI init, QE enable, 4-byte addr mode, memory-mapped mode */
   QSPI_FLASH_Init();
@@ -165,6 +176,7 @@ int main(void)
 //	  HAL_Delay(500);
 //  }
   Jump_to_Application();
+#endif
 
   /* USER CODE END 2 */
 
