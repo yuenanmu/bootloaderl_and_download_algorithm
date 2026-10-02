@@ -1962,7 +1962,7 @@ typedef struct
 #define OCTOSPI1_BASE             (0x90000000UL) /*!< Base address of : OCTOSPI1 memories  accessible over AXI                                 */
 #define OCTOSPI2_BASE             (0x70000000UL) /*!< Base address of : OCTOSPI2 memories  accessible over AXI                                 */
 
-#define FLASH_BANK1_BASE          (0x08000000UL) /*!< Base address of : (up to 1 MB) Flash Bank1 accessible over AXI                          */
+#define FLASH_BANK1_BASE          (0x90000000UL) /*!< Base address of : (up to 1 MB) Flash Bank1 accessible over AXI                          */
 #define FLASH_BANK2_BASE          (0x08100000UL) /*!< Base address of : (up to 1 MB) Flash Bank2 accessible over AXI                          */
 #define FLASH_END                 (0x081FFFFFUL) /*!< FLASH end address                                                                       */
 

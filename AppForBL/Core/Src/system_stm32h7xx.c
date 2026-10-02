@@ -113,9 +113,10 @@
 #define VECT_TAB_OFFSET         0x00000000U       /*!< Vector Table base offset field.
                                                        This value must be a multiple of 0x400. */
 #else
-#define VECT_TAB_BASE_ADDRESS   FLASH_BANK1_BASE  /*!< Vector Table base address field.
+/* App runs from external QSPI flash, memory-mapped at 0x90000000 */
+#define VECT_TAB_BASE_ADDRESS   0x90000000U       /*!< Vector Table base address field.
                                                        This value must be a multiple of 0x400. */
-#define VECT_TAB_OFFSET         0x00010000U       /*!< Vector Table base offset field.
+#define VECT_TAB_OFFSET         0x00000000U       /*!< Vector Table base offset field.
                                                        This value must be a multiple of 0x400. */
 #endif /* VECT_TAB_SRAM */
 #endif /* DUAL_CORE && CORE_CM4 */

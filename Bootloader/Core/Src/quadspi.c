@@ -35,7 +35,7 @@ void MX_QUADSPI_Init(void)
   /* USER CODE END QUADSPI_Init 0 */
 
   /* USER CODE BEGIN QUADSPI_Init 1 */
-	
+
   /* USER CODE END QUADSPI_Init 1 */
   hqspi.Instance = QUADSPI;
   hqspi.Init.ClockPrescaler = 1;
@@ -161,55 +161,55 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
 }
 
 /* USER CODE BEGIN 1 */
-//QSPIï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-//instruction:Òªï¿½ï¿½ï¿½Íµï¿½Ö¸ï¿½ï¿½
-//address:ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½Ä¿ï¿½Äµï¿½Ö·
-//dummyCycles:ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-//	instructionMode:Ö¸ï¿½ï¿½Ä£Ê½;QSPI_INSTRUCTION_NONE,QSPI_INSTRUCTION_1_LINE,QSPI_INSTRUCTION_2_LINE,QSPI_INSTRUCTION_4_LINE  
-//	addressMode:ï¿½ï¿½Ö·Ä£Ê½; QSPI_ADDRESS_NONE,QSPI_ADDRESS_1_LINE,QSPI_ADDRESS_2_LINE,QSPI_ADDRESS_4_LINE
-//	addressSize:ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½;QSPI_ADDRESS_8_BITS,QSPI_ADDRESS_16_BITS,QSPI_ADDRESS_24_BITS,QSPI_ADDRESS_32_BITS
-//	dataMode:ï¿½ï¿½ï¿½ï¿½Ä£Ê½; QSPI_DATA_NONE,QSPI_DATA_1_LINE,QSPI_DATA_2_LINE,QSPI_DATA_4_LINE
+//QSPI·¢ËÍÃüÁî
+//instruction:Òª·¢ËÍµÄÖ¸Áî
+//address:·¢ËÍµ½µÄÄ¿µÄµØÖ·
+//dummyCycles:¿ÕÖ¸ÁîÖÜÆÚÊı
+//	instructionMode:Ö¸ÁîÄ£Ê½;QSPI_INSTRUCTION_NONE,QSPI_INSTRUCTION_1_LINE,QSPI_INSTRUCTION_2_LINE,QSPI_INSTRUCTION_4_LINE  
+//	addressMode:µØÖ·Ä£Ê½; QSPI_ADDRESS_NONE,QSPI_ADDRESS_1_LINE,QSPI_ADDRESS_2_LINE,QSPI_ADDRESS_4_LINE
+//	addressSize:µØÖ·³¤¶È;QSPI_ADDRESS_8_BITS,QSPI_ADDRESS_16_BITS,QSPI_ADDRESS_24_BITS,QSPI_ADDRESS_32_BITS
+//	dataMode:Êı¾İÄ£Ê½; QSPI_DATA_NONE,QSPI_DATA_1_LINE,QSPI_DATA_2_LINE,QSPI_DATA_4_LINE
 
 void QSPI_Send_CMD(uint32_t instruction,uint32_t address,uint32_t dummyCycles,uint32_t instructionMode,uint32_t addressMode,uint32_t addressSize,uint32_t dataMode)
 {
     QSPI_CommandTypeDef Cmdhandler;
     
-    Cmdhandler.Instruction=instruction;                 	//Ö¸ï¿½ï¿½
-    Cmdhandler.Address=address;                            	//ï¿½ï¿½Ö·
-    Cmdhandler.DummyCycles=dummyCycles;                     //ï¿½ï¿½ï¿½Ã¿ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    Cmdhandler.InstructionMode=instructionMode;				//Ö¸ï¿½ï¿½Ä£Ê½
-    Cmdhandler.AddressMode=addressMode;   					//ï¿½ï¿½Ö·Ä£Ê½
-    Cmdhandler.AddressSize=addressSize;   					//ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½
-    Cmdhandler.DataMode=dataMode;             				//ï¿½ï¿½ï¿½ï¿½Ä£Ê½
-    Cmdhandler.SIOOMode=QSPI_SIOO_INST_EVERY_CMD;       	//Ã¿ï¿½Î¶ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
-    Cmdhandler.AlternateByteMode=QSPI_ALTERNATE_BYTES_NONE; //ï¿½Ş½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½
-    Cmdhandler.DdrMode=QSPI_DDR_MODE_DISABLE;           	//ï¿½Ø±ï¿½DDRÄ£Ê½
+    Cmdhandler.Instruction=instruction;                 	//Ö¸Áî
+    Cmdhandler.Address=address;                            	//µØÖ·
+    Cmdhandler.DummyCycles=dummyCycles;                     //ÉèÖÃ¿ÕÖ¸ÁîÖÜÆÚÊı
+    Cmdhandler.InstructionMode=instructionMode;				//Ö¸ÁîÄ£Ê½
+    Cmdhandler.AddressMode=addressMode;   					//µØÖ·Ä£Ê½
+    Cmdhandler.AddressSize=addressSize;   					//µØÖ·³¤¶È
+    Cmdhandler.DataMode=dataMode;             				//Êı¾İÄ£Ê½
+    Cmdhandler.SIOOMode=QSPI_SIOO_INST_EVERY_CMD;       	//Ã¿´Î¶¼·¢ËÍÖ¸Áî
+    Cmdhandler.AlternateByteMode=QSPI_ALTERNATE_BYTES_NONE; //ÎŞ½»Ìæ×Ö½Ú
+    Cmdhandler.DdrMode=QSPI_DDR_MODE_DISABLE;           	//¹Ø±ÕDDRÄ£Ê½
     Cmdhandler.DdrHoldHalfCycle=QSPI_DDR_HHC_ANALOG_DELAY;
 
     HAL_QSPI_Command(&hqspi,&Cmdhandler,5000);
 }
 
-//QSPIï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Èµï¿½ï¿½ï¿½ï¿½ï¿½
-//buf:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
-//datalen:Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ³ï¿½ï¿½ï¿½
-//ï¿½ï¿½ï¿½ï¿½Öµ:0,ï¿½ï¿½ï¿½ï¿½
-//    ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//QSPI½ÓÊÕÖ¸¶¨³¤¶ÈµÄÊı¾İ
+//buf:½ÓÊÕÊı¾İ»º³åÇøÊ×µØÖ·
+//datalen:Òª´«ÊäµÄÊı¾İ³¤¶È
+//·µ»ØÖµ:0,Õı³£
+//    ÆäËû,´íÎó´úÂë
 uint8_t QSPI_Receive(uint8_t* buf,uint32_t datalen)
 {
-    hqspi.Instance->DLR=datalen-1;                           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ³ï¿½ï¿½ï¿½
-    if(HAL_QSPI_Receive(&hqspi,buf,5000)==HAL_OK) return 0;  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    hqspi.Instance->DLR=datalen-1;                           //ÅäÖÃÊı¾İ³¤¶È
+    if(HAL_QSPI_Receive(&hqspi,buf,5000)==HAL_OK) return 0;  //½ÓÊÕÊı¾İ
     else return 1;
 }
 
-//QSPIï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Èµï¿½ï¿½ï¿½ï¿½ï¿½
-//buf:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
-//datalen:Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ³ï¿½ï¿½ï¿½
-//ï¿½ï¿½ï¿½ï¿½Öµ:0,ï¿½ï¿½ï¿½ï¿½
-//    ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//QSPI·¢ËÍÖ¸¶¨³¤¶ÈµÄÊı¾İ
+//buf:·¢ËÍÊı¾İ»º³åÇøÊ×µØÖ·
+//datalen:Òª´«ÊäµÄÊı¾İ³¤¶È
+//·µ»ØÖµ:0,Õı³£
+//    ÆäËû,´íÎó´úÂë
 uint8_t QSPI_Transmit(uint8_t* buf,uint32_t datalen)
 {
-    hqspi.Instance->DLR=datalen-1;                            //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ³ï¿½ï¿½ï¿½
-    if(HAL_QSPI_Transmit(&hqspi,buf,5000)==HAL_OK) return 0;  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    hqspi.Instance->DLR=datalen-1;                            //ÅäÖÃÊı¾İ³¤¶È
+    if(HAL_QSPI_Transmit(&hqspi,buf,5000)==HAL_OK) return 0;  //·¢ËÍÊı¾İ
     else return 1;
 }
 /* USER CODE END 1 */
